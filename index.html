@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Exploring Vermont Trails</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="css/logo-nav.css" rel="stylesheet">
+
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <!-- Leaflet from CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ==" crossorigin=""/>
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js" integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log==" crossorigin=""></script>
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Esri Leaflet from CDN -->
+    <script src="https://unpkg.com/esri-leaflet@2.0.4/dist/esri-leaflet.js"></script>
+
+    <style>
+      body { margin:0; padding:0; }
+      #map { position: absolute; top:0; bottom:0; right:0; left:0;}
+    </style>
+
+
+  </head>
+
+  <body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <img src="logo.png" width="150" height="30" alt="">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="#"><b>Vermont Trail Explorer</b>
+                <span class="sr-only">(current)</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <div data-toggle="modal" data-target="#aboutModal"><a class="nav-link"  href="#">About</a></div>
+            </li>
+            <li class="nav-item">
+            <li class="nav-item">
+              <div data-toggle="modal" data-target="#layerModal"><a class="nav-link"  href="#">Layers</a></div>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://geodata.vermont.gov/" target="_blank">Open Data Portal</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://vcgi.vermont.gov/" target="_blank">VCGI Website</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container">
+      <div id="map" ></div>
+      <script>
+
+        <!-- Sets map location and moves zoom controls -->
+      	var map = L.map('map', {zoomControl: true}).setView([44.2627, -72.5804], 10);
+
+        map.zoomControl.setPosition('bottomright')
+
+        <!-- basemap from Mapbox -->
+      	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoia2Vmb3J0bmV5IiwiYSI6ImNqNnF5cXlsMDAzaXoyd3BoOXJtcnhxZ3AifQ.kMVhBHqX5aWw171n1csPug' , {
+      		maxZoom: 18,
+      		attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+      			'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+      			'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+      		id: 'mapbox.streets'
+      	}).addTo(map);
+
+        <!-- E911 Trails -->
+        var traillinesurl = "https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_EMERGENCY_SP_NOCACHE_v1/MapServer/21/";
+
+        	var traillines = L.esri.featureLayer({
+        		url: traillinesurl,
+        		style: function (feature) {
+        			return {color: '#f49842',
+        			weight: 2,
+        			opacity: 0.8,};
+        			}
+        	})
+
+              <!-- VT Large Forest Land Ownership Blocks - lines -->
+              var vtforesturl = "https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_CADASTRAL_SP_NOCACHE_v1/MapServer/7/";
+
+                var vtforest = L.esri.featureLayer({
+                  url: vtforesturl,
+                  style: function (feature) {
+                    return {color: '#884EA0',
+                    weight: 2,
+                    opacity: 0.9,};
+                    }
+                })
+
+                <!-- VT Northern Forest Lands Area - Private Conservation Lands -->
+                var privatelandurl = "https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_CADASTRAL_SP_NOCACHE_v1/MapServer/8/";
+
+                  var privateland = L.esri.featureLayer({
+                    url: privatelandurl,
+                    style: function (feature) {
+                      return {color: '#2471A3',
+                      weight: 2,
+                      opacity: 0.9,};
+                      }
+                  })
+
+                  <!-- VT Protected Lands  -->
+                  var protectedlandurl = "https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_CADASTRAL_SP_NOCACHE_v1/MapServer/10/";
+
+                    var protectedland = L.esri.featureLayer({
+                      url: protectedlandurl,
+                      style: function (feature) {
+                        return {color: '#2E4053',
+                        weight: 2,
+                        opacity: 0.9,};
+                        }
+                    });
+
+                    <!-- VT Wilderness Areas -->
+                    var wildernessurl = "https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_CADASTRAL_SP_NOCACHE_v1/MapServer/12/";
+
+                      var wilderness = L.esri.featureLayer({
+                        url: wildernessurl,
+                        style: function (feature) {
+                          return {color: '#D4AC0D',
+                          weight: 2,
+                          opacity: 0.9,};
+                          }
+                      });
+
+
+          <!-- Makes layer controls -->
+
+          var mapOverlays = {
+            "Trails": traillines,
+            "Vermont Wilderness Blocks": wilderness,
+            "Protected Lands Blocks": protectedland,
+            "Private Land Blocks": privateland,
+            "Large Forest Land Ownership Blocks": vtforest,
+          };
+
+        L.control.layers(null, mapOverlays, {position:'bottomright'}).addTo(map);
+
+      </script>
+
+    </div>
+
+    <!-- Modal -->
+<div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">About</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        The map was created using Leaflet with added layer and zoom controls in a basic Bootstrap template quickly to create something is responsive and easy to use. The basemap is from Mapbox and the Open Street Map tilesets while the toggeable layers are from the Vermont Center for Geographic Information's Open Data Portal served through Esri's APIs. The layers include point, line and shape vectors.<p>
+          <ul>
+            <li><a href="http://leafletjs.com/examples.html" target="_blank">Leaflet Tutorials</a>
+            </li>
+            <li><a href="https://startbootstrap.com/template-categories/all/"  target="_blank">Bootstrap Templates</a>
+            </li>
+            <li><a href="http://geodata.vermont.gov/" target="_blank">VCGI Open Data Portal</a>
+            </li>
+            <li><a href="https://github.com/vcgi" target="_blank">VCGI GitHub</a>
+            </li>
+          </ul>
+        Start by selecting what you want to see in the layer control in the bottom right!
+            </template>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="layerModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Layers</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <ul>
+          <li>VT Trails (<a href="https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_EMERGENCY_SP_NOCACHE_v1/MapServer/21/" target="_blank">Layer 21</a>) Line Data defining Vermont trails including the Long Trail, Appalachian Trail and other State or Local trail networks. <p>
+          </li>
+          <li>VT Wilderness Areas (<a href="https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_CADASTRAL_SP_NOCACHE_v1/MapServer/12/" target="_blank">Layer 12</a>) Description: A parcel of Forest Service land congressionally designated as wilderness such as National Wilderness Area.<p>
+          </li>
+          <li>VT Protected Lands (<a href="https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_CADASTRAL_SP_NOCACHE_v1/MapServer/10/" target="_blank">Layer 10</a>) parcel data from the Vermont Protected Lands Database (VPLD) showing protect lands.<p>
+          </li>
+          <li>VT Northern Forest Lands Area - Private Conservation Lands (<a href="https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_CADASTRAL_SP_NOCACHE_v1/MapServer/8/" target="_blank">Layer 8</a>)  Private Conservation Lands in the Northern Forest land area - land in full or partial ownership by 501(c)3 conservation organizations (VLT, TNC, GMC, and others).<p>
+          </li>
+          <li>VT Large Forest Land Ownership Blocks - lines (<a href="https://maps.vcgi.vermont.gov/arcgis/rest/services/EGC_services/OPENDATA_VCGI_CADASTRAL_SP_NOCACHE_v1/MapServer/7/" target="_blank">Layer 7</a>)Large forest land ownership blocks (Northern Forest Lands)<p>
+          </li>
+        </ul>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <!-- /.container -->
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  </body>
+
+</html>
